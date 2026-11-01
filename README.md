@@ -2,7 +2,7 @@
 
 Official website of the **Unmanned Ground Vehicle Tech Team at Delhi Technological University** — designing, building, and deploying autonomous ground vehicles for real-world applications and international competitions.
 
-🌐 **Live at:** [https://ugvdtu.in/](https://ugvdtu.in/)
+🌐 **Live at:** [https://ugvdtu.in/](https://ugvdtu.in/)                              
 
 ---
 
