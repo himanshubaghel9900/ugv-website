@@ -23,9 +23,16 @@ const ACHIEVEMENTS = [
 function About() {
   const [active, setActive] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [achievementFilter, setAchievementFilter] = useState("all");
   const ref = useRef(null);
 
-  const displayedAchievements = showAll ? ACHIEVEMENTS : ACHIEVEMENTS.slice(0, 10);
+  const filteredAchievements = ACHIEVEMENTS.filter((achievement) => {
+    if (achievementFilter === "global") return /Global/i.test(achievement.position);
+    if (achievementFilter === "finalist") return /Finalist/i.test(achievement.position);
+    if (achievementFilter === "podium") return !/Global|Finalist/i.test(achievement.position);
+    return true;
+  });
+  const displayedAchievements = showAll ? filteredAchievements : filteredAchievements.slice(0, 10);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -80,6 +87,24 @@ function About() {
 
           <div className="about-achievements">
             <h3 className="about-subtitle">Achievements</h3>
+            <div className="achievement-filters" role="group" aria-label="Filter achievements">
+              {[
+                ["all", "All"],
+                ["global", "Global ranks"],
+                ["podium", "Podium finishes"],
+                ["finalist", "Finalists"],
+              ].map(([value, label]) => (
+                <button
+                  type="button"
+                  key={value}
+                  className={achievementFilter === value ? "active" : ""}
+                  aria-pressed={achievementFilter === value}
+                  onClick={() => { setAchievementFilter(value); setShowAll(false); }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="table-container">
               <table className="achievements-table">
                 <thead>
@@ -102,7 +127,7 @@ function About() {
                 </tbody>
               </table>
             </div>
-            {ACHIEVEMENTS.length > 10 && (
+            {filteredAchievements.length > 10 && (
               <div className="achievements-toggle-container">
                 <button
                   className="achievements-toggle-btn"
