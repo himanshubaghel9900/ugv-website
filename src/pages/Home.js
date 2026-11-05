@@ -171,6 +171,7 @@ function Home() {
         </div>
       </section>
 
+      <VehicleArchive />
       <About />
       <Projects />
       <Research />
