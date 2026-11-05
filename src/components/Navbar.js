@@ -27,28 +27,18 @@ const smoothScrollTo = (targetY, onDone) => {
   const startY = window.scrollY;
   const diff = targetY - startY;
   const distance = Math.abs(diff);
-
-  const duration = Math.min(
-    4200,
-    Math.max(1600, distance * 1.15)
-  );
-
+  const duration = Math.min(4200, Math.max(1600, distance * 1.15));
   let start = null;
 
   const ease = (t) =>
-    t < 0.5
-      ? 8 * t * t * t * t
-      : 1 - Math.pow(-2 * t + 2, 4) / 2;
+    t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
 
   const step = (time) => {
     if (!start) start = time;
     const p = Math.min((time - start) / duration, 1);
     window.scrollTo(0, startY + diff * ease(p));
-    if (p < 1) {
-      raf = requestAnimationFrame(step);
-    } else {
-      onDone?.();
-    }
+    if (p < 1) raf = requestAnimationFrame(step);
+    else onDone?.();
   };
 
   raf = requestAnimationFrame(step);
@@ -62,10 +52,35 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mode, setMode] = useState("desktop");
+  const [theme, setTheme] = useState("dark");
 
   const isHome = location.pathname === "/";
-  const clickLock = useRef(false);       
-  const scrollLock = useRef(false);       
+  const clickLock = useRef(false);
+  const scrollLock = useRef(false);
+
+  useEffect(() => {
+    let savedTheme = "dark";
+    try {
+      savedTheme = window.localStorage.getItem("ugv-theme") === "light" ? "light" : "dark";
+    } catch {
+      // Storage can be unavailable in private browsing; dark remains the default.
+    }
+    document.documentElement.setAttribute("data-theme", savedTheme);
+    setTheme(savedTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme((current) => {
+      const next = current === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try {
+        window.localStorage.setItem("ugv-theme", next);
+      } catch {
+        // The theme still changes for this session if storage is unavailable.
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 1);
@@ -76,14 +91,14 @@ export default function Navbar() {
   useEffect(() => {
     const m = window.matchMedia("(max-width: 767px)");
     const t = window.matchMedia("(max-width: 1360px)");
-    const u = () =>
+    const updateMode = () =>
       setMode(m.matches ? "mobile" : t.matches ? "tablet" : "desktop");
-    u();
-    m.addEventListener("change", u);
-    t.addEventListener("change", u);
+    updateMode();
+    m.addEventListener("change", updateMode);
+    t.addEventListener("change", updateMode);
     return () => {
-      m.removeEventListener("change", u);
-      t.removeEventListener("change", u);
+      m.removeEventListener("change", updateMode);
+      t.removeEventListener("change", updateMode);
     };
   }, []);
 
@@ -92,43 +107,33 @@ export default function Navbar() {
   const getDisplayActiveIndex = () => {
     const activeItem = MENU_ALL[activeIndex];
     if (!activeItem) return 0;
-
     const idx = currentMenu.findIndex((item) => item.label === activeItem.label);
     if (idx !== -1) return idx;
-
     if (activeItem.id) {
       const homeIdx = currentMenu.findIndex((item) => item.id === "home" || item.path === "/");
       if (homeIdx !== -1) return homeIdx;
     }
-
     return 0;
   };
 
   useEffect(() => {
     if (isHome) return;
-
     const idx = MENU_ALL.findIndex(
-      (m) =>
-        m.path &&
-        (location.pathname === m.path ||
-          location.pathname.startsWith(m.path + "/"))
+      (item) =>
+        item.path &&
+        (location.pathname === item.path || location.pathname.startsWith(item.path + "/"))
     );
-
     if (idx !== -1) setActiveIndex(idx);
   }, [location.pathname, isHome]);
 
   useEffect(() => {
     if (!isHome) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         if (scrollLock.current) return;
-
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const idx = MENU_ALL.findIndex(
-              (m) => m.id === e.target.id
-            );
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = MENU_ALL.findIndex((item) => item.id === entry.target.id);
             if (idx !== -1) setActiveIndex(idx);
           }
         });
@@ -136,20 +141,18 @@ export default function Navbar() {
       { rootMargin: "-45% 0px -45% 0px" }
     );
 
-    MENU_ALL.forEach((m) => {
-      if (!m.id) return;
-      const el = document.getElementById(m.id);
-      if (el) observer.observe(el);
+    MENU_ALL.forEach((item) => {
+      if (!item.id) return;
+      const element = document.getElementById(item.id);
+      if (element) observer.observe(element);
     });
-
     return () => observer.disconnect();
   }, [isHome]);
 
   const handleClick = (item, index) => {
     if (clickLock.current) return;
-
     clickLock.current = true;
-    scrollLock.current = true; 
+    scrollLock.current = true;
     setActiveIndex(index);
     setMenuOpen(false);
 
@@ -160,9 +163,7 @@ export default function Navbar() {
 
     if (item.label === "Home") {
       navigate("/");
-      requestAnimationFrame(() => {
-        smoothScrollTo(0, unlock);
-      });
+      requestAnimationFrame(() => smoothScrollTo(0, unlock));
       return;
     }
 
@@ -170,11 +171,9 @@ export default function Navbar() {
       navigate("/");
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          const el = document.getElementById(item.id);
-          if (el) {
-            const y =
-              el.getBoundingClientRect().top +
-              window.scrollY;
+          const element = document.getElementById(item.id);
+          if (element) {
+            const y = element.getBoundingClientRect().top + window.scrollY;
             smoothScrollTo(y, unlock);
           } else {
             unlock();
@@ -194,7 +193,15 @@ export default function Navbar() {
     <nav className={`navbar ${scrolled ? "scrolled" : ""}`}>
       <div
         className="nav-logo"
+        role="button"
+        tabIndex={0}
         onClick={() => handleClick(MENU_ALL[0], 0)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleClick(MENU_ALL[0], 0);
+          }
+        }}
       >
         UGV-<span>DTU</span>
       </div>
@@ -205,15 +212,22 @@ export default function Navbar() {
             className="pill-indicator"
             style={{
               transform: `translateX(${getDisplayActiveIndex() * 102}px)`,
-              transition:
-                "transform 0.6s cubic-bezier(.22,1,.36,1)",
+              transition: "transform 0.6s cubic-bezier(.22,1,.36,1)",
             }}
           />
-          {currentMenu.map((item, i) => (
+          {currentMenu.map((item, index) => (
             <li
               key={item.label}
               className="nav-pill"
-              onClick={() => handleClick(item, i)}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleClick(item, index)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleClick(item, index);
+                }
+              }}
             >
               {item.label}
             </li>
@@ -221,10 +235,24 @@ export default function Navbar() {
         </ul>
       )}
 
+      <button
+        type="button"
+        className="theme-toggle"
+        onClick={toggleTheme}
+        aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+        aria-pressed={theme === "light"}
+        title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      >
+        <span aria-hidden="true">{theme === "dark" ? "☼" : "◐"}</span>
+      </button>
+
       {mode === "mobile" && (
         <button
+          type="button"
           className={`hamburger ${menuOpen ? "open" : ""}`}
-          onClick={() => setMenuOpen((p) => !p)}
+          onClick={() => setMenuOpen((previous) => !previous)}
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
         >
           <span />
           <span />
@@ -234,11 +262,19 @@ export default function Navbar() {
 
       {mode === "mobile" && menuOpen && (
         <div className="mobile-menu">
-          {MENU_PRIMARY.map((item, i) => (
+          {MENU_PRIMARY.map((item, index) => (
             <div
               key={item.label}
               className="mobile-item"
-              onClick={() => handleClick(item, i)}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleClick(item, index)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleClick(item, index);
+                }
+              }}
             >
               {item.label}
             </div>
