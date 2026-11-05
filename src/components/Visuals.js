@@ -39,6 +39,7 @@ function Visuals() {
   const trackRef = useRef(null);
 
   const [visible, setVisible] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
   const x = useMotionValue(0);
   const isDragging = useRef(false);
