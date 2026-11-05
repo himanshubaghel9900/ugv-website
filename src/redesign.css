@@ -552,3 +552,39 @@ button { font: inherit; }
   .vehicle-archive-layout { grid-template-columns: 1fr; }
   .vehicle-archive-details > p { min-height: 0; }
 }
+
+.achievement-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.achievement-filters button {
+  padding: 9px 12px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  font: 10px var(--font-mono);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.achievement-filters button:hover,
+.achievement-filters button.active {
+  color: var(--text-main);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.achievements-table th {
+  color: var(--text-dim);
+  font: 500 10px var(--font-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.achievements-table td { color: var(--text-muted); }
+.achievements-table .badge {
+  color: var(--text-main);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
