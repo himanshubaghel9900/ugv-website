@@ -1,4 +1,5 @@
 import "./App.css";
+import "./redesign.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
