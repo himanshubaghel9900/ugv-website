@@ -8,6 +8,7 @@ import Team from "../components/Team.js";
 import Visuals from "../components/Visuals.js";
 import Contact from "../components/Contact.js";
 import UgvRobot from "../components/UgvRobot.js";
+import VehicleArchive from "../components/VehicleArchive.js";
 
 import agniImg from "../assets/projects/agni.jpg";
 import ashwini_1_Img from "../assets/projects/ashwini_1.jpeg";
@@ -170,6 +171,7 @@ function Home() {
         </div>
       </section>
 
+      <VehicleArchive />
       <About />
       <Projects />
       <Research />

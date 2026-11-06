@@ -39,6 +39,7 @@ function Visuals() {
   const trackRef = useRef(null);
 
   const [visible, setVisible] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
   const x = useMotionValue(0);
   const isDragging = useRef(false);
@@ -48,6 +49,17 @@ function Visuals() {
   const AUTO_SPEED = 35;
   const FRICTION = 0.94;
   const MIN_VELOCITY = 0.1;
+
+  useEffect(() => {
+    if (selectedIndex === null) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setSelectedIndex(null);
+      if (event.key === "ArrowRight") setSelectedIndex((index) => (index + 1) % IMAGES.length);
+      if (event.key === "ArrowLeft") setSelectedIndex((index) => (index - 1 + IMAGES.length) % IMAGES.length);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedIndex]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -132,7 +144,17 @@ function Visuals() {
             <motion.div
               key={i}
               className="visual-card"
-              whileHover={{ scale: 1.08, y: -10 }}
+              onClick={() => setSelectedIndex(i % IMAGES.length)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Open UGV photo ${((i % IMAGES.length) + 1)}`}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setSelectedIndex(i % IMAGES.length);
+                }
+              }}
+              whileHover={{ scale: 1.04, y: -6 }}
               transition={{
                 type: "spring",
                 stiffness: 220,
@@ -143,6 +165,16 @@ function Visuals() {
             </motion.div>
           ))}
         </motion.div>
+
+        {selectedIndex !== null && (
+          <div className="visuals-lightbox" role="dialog" aria-modal="true" aria-label="UGV photo viewer" onClick={() => setSelectedIndex(null)}>
+            <button type="button" className="visuals-lightbox-close" aria-label="Close photo viewer" onClick={() => setSelectedIndex(null)}>×</button>
+            <button type="button" className="visuals-lightbox-nav previous" aria-label="Previous photo" onClick={(event) => { event.stopPropagation(); setSelectedIndex((index) => (index - 1 + IMAGES.length) % IMAGES.length); }}>‹</button>
+            <img src={IMAGES[selectedIndex]} alt={`UGV team visual ${selectedIndex + 1}`} onClick={(event) => event.stopPropagation()} />
+            <button type="button" className="visuals-lightbox-nav next" aria-label="Next photo" onClick={(event) => { event.stopPropagation(); setSelectedIndex((index) => (index + 1) % IMAGES.length); }}>›</button>
+            <span className="visuals-lightbox-count">{String(selectedIndex + 1).padStart(2, "0")} / {String(IMAGES.length).padStart(2, "0")}</span>
+          </div>
+        )}
       </div>
     </section>
   );
